@@ -3,7 +3,6 @@
 #include <string>
 #include <unordered_map>
 #include <regex>
-#include <algorithm>
 #include <cstring>
 #include <cerrno>
 

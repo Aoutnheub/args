@@ -1,5 +1,37 @@
 Simple library for parsing command-line arguments.
 
+# Installation
+
+1. Clone the repository
+
+```bash
+$ git clone https://github.com/Aoutnheub/args.git
+```
+
+2. Create build directory and go in it
+
+```bash
+$ mkdir build && cd build
+```
+
+3. Create makefiles
+
+```bash
+$ cmake ..
+```
+
+4. Build
+
+```bash
+$ cmake --build . --config Release
+```
+
+5. Install
+
+```bash
+$ cmake --install . --config Release
+```
+
 # Usage
 
 ## Defining arguments

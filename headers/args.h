@@ -6,9 +6,6 @@
 #include <cstring>
 #include <cerrno>
 
-// temp
-#include <iostream>
-
 namespace args {
     class invalid_argument : public std::exception {
         private:

@@ -256,3 +256,67 @@ std::string ArgParser::help() {
 
     return helpful;
 }
+
+ArgResults ArgParser::parse(const std::vector<std::string> &_args) {
+    ArgResults results;
+
+    for(auto i = flags.begin(); i != flags.end(); ++i) {
+        results.flag.insert(results.flag.end(), {i->first, false});
+    }
+    for(auto i = options.begin(); i != options.end(); ++i) {
+        results.option.insert(results.option.end(), {i->first, i->second->defaults_to});
+    }
+
+    std::size_t i = 0;
+    while(i < _args.size()) {
+        if(!_args[i].empty()) {
+            if(std::regex_match(_args[i], std::regex("^-[^-].*$"))) {
+                if(_args[i].length() > 2) {
+                    // multiple flags
+                    for(std::size_t j = 1; j < _args[i].length(); ++j) {
+                        std::string f;
+                        f += _args[i][j];
+                        if(!searchFlag(f, results)) {
+                            throw args::invalid_argument(f);
+                        }
+                    }
+                    ++i;
+                }else {
+                    std::string stripped_arg = _args[i].substr(1);
+                    if(!searchOption(_args, stripped_arg, i, results)) {
+                        if(!searchFlag(stripped_arg, results)) {
+                            throw args::invalid_argument(stripped_arg);
+                        }else {
+                            ++i;
+                        }
+                    }else {
+                        i += 2;
+                    }
+                }
+            }else if(std::regex_match(_args[i], std::regex("^--[^-].*$"))) {
+                std::string stripped_arg = _args[i].substr(2);
+                if(!searchOption(_args, stripped_arg, i, results)) {
+                    if(!searchFlag(stripped_arg, results)) {
+                        throw args::invalid_argument(stripped_arg);
+                    }else {
+                        ++i;
+                    }
+                }else {
+                    i += 2;
+                }
+            }else if(i == 0 && !commands.empty()) {
+                if(commands.find(_args[i]) != commands.end()) {
+                    results.command = _args[i];
+                    ++i;
+                }else {
+                    results.positional.push_back(_args[i]);
+                    ++i;
+                }
+            }
+        }else {
+            ++i;
+        }
+    }
+
+    return results;
+}

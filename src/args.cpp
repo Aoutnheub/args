@@ -163,6 +163,31 @@ std::string ArgParser::findOptionAbbr(const std::string &_name) {
     return "";
 }
 
+void ArgParser::splitDesc(std::string &_help, std::string &_desc) {
+    std::size_t desc_length = _desc.length();
+    std::size_t last = 0;
+    int line_length = max_line_length-8;
+    std::string indent = "        ";
+    while(desc_length > line_length) {
+        std::size_t token;
+        if(last+line_length >= last+desc_length) {
+            _help += indent + _desc.substr(last) + '\n';
+            break;
+        }else {
+            token = _desc.rfind(" ", last+line_length);
+        }
+        if(token != std::string::npos && token > last) {
+            _help += indent + _desc.substr(last, token-last) + '\n';
+            desc_length -= token-last-1;
+            last = token+1;
+        }else {
+            _help += indent + _desc.substr(last) + '\n';
+            break;
+        }
+    }
+    _help += indent + _desc.substr(last) + '\n';
+}
+
 void ArgParser::addFlag(const std::string &_name, const std::string &_help, const char &_abbr) {
     if(flags.find(_name) == flags.end() && options.find(_name) == options.end()) {
         ArgFlag *argf = new ArgFlag(_help);
@@ -211,16 +236,59 @@ std::string ArgParser::help() {
         helpful += name;
     }
     if(!description.empty()) {
-        helpful += " - "+description;
+        helpful += " - ";
+        if(description.length() > max_line_length-name.length()-3) {
+            std::size_t desc_length = description.length();
+            std::size_t last = 0;
+            int line_length = max_line_length-name.length()-3;
+            std::string indent;
+            for(std::size_t i = 0; i < name.length()+3; ++i) {
+                indent += " ";
+            }
+            std::size_t tk = description.rfind(" ", last+line_length);
+            if(tk != std::string::npos) {
+                helpful += description.substr(last, tk-last) + '\n';
+                desc_length -= tk-last-1;
+                last = tk+1;
+            }
+            while(desc_length > line_length) {
+                std::size_t token;
+                if(last+line_length >= last+desc_length) {
+                    helpful += indent + description.substr(last) + '\n';
+                    break;
+                }else {
+                    token = description.rfind(" ", last+line_length);
+                }
+                if(token != std::string::npos && token > last) {
+                    helpful += indent + description.substr(last, token-last) + '\n';
+                    desc_length -= token-last-1;
+                    last = token+1;
+                }else {
+                    helpful += indent + description.substr(last) + '\n';
+                    break;
+                }
+            }
+            helpful += indent + description.substr(last) + '\n';
+        }else {
+            helpful += description + '\n';
+        }
     }
-    helpful += "\n\n";
+    helpful += "\n";
+
     if(!commands.empty()) {
         helpful += "COMMANDS\n\n";
         for(auto i = commands.begin(); i != commands.end(); ++i) {
             helpful += "    "+i->first+'\n';
-            helpful += "        "+i->second+"\n\n";
+            std::string indent = "        ";
+            if(i->second.length() > max_line_length-8) {
+                splitDesc(helpful, i->second);
+            }else {
+                helpful += indent + i->second + '\n';
+            }
+            helpful += '\n';
         }
     }
+
     if(!flags.empty()) {
         helpful += "FLAGS\n\n";
         for(auto i = flags.begin(); i != flags.end(); ++i) {
@@ -229,9 +297,18 @@ std::string ArgParser::help() {
             if(!abbr.empty()) {
                 helpful += ", -"+abbr;
             }
-            helpful += "\n        "+i->second->help+"\n\n";
+            // helpful += "\n        "+i->second->help+"\n\n";
+            helpful += '\n';
+            std::string indent = "        ";
+            if(i->second->help.length() > max_line_length-8) {
+                splitDesc(helpful, i->second->help);
+            }else {
+                helpful += indent + i->second->help + '\n';
+            }
+            helpful += '\n';
         }
     }
+
     if(!options.empty()) {
         helpful += "OPTIONS\n\n";
         for(auto i = options.begin(); i != options.end(); ++i) {
@@ -250,7 +327,14 @@ std::string ArgParser::help() {
                     }
                 }
             }
-            helpful += "\n        "+i->second->help+"\n\n";
+            helpful += '\n';
+            std::string indent = "        ";
+            if(i->second->help.length() > max_line_length-8) {
+                splitDesc(helpful, i->second->help);
+            }else {
+                helpful += indent + i->second->help + '\n';
+            }
+            helpful += '\n';
         }
     }
 

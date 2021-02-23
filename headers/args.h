@@ -6,6 +6,9 @@
 #include <cstring>
 #include <cerrno>
 
+// temp
+#include <iostream>
+
 namespace args {
     class invalid_argument : public std::exception {
         private:
@@ -95,8 +98,11 @@ class ArgParser {
         bool searchFlag(const std::string &_sa, ArgResults &_r);
         std::string findFlagAbbr(const std::string &_name);
         std::string findOptionAbbr(const std::string &_name);
+        void splitDesc(std::string &_help, std::string &_desc);
 
     public:
+        int max_line_length = 80;
+
         ArgParser(const std::string &_name = "", const std::string &_description = "");
         ~ArgParser();
 

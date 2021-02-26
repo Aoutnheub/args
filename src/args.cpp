@@ -78,7 +78,39 @@ ArgParser::~ArgParser() {
     }
 }
 
-bool ArgParser::searchOption(const std::vector<std::string> &_a, const std::string &_sa, const std::size_t &_i, ArgResults &_r) {
+bool ArgParser::validateOption(const std::vector<std::string> &_a, std::string _sa, std::size_t &_i, ArgResults &_r) {
+    std::string val;
+    std::size_t equals = _sa.find("=");
+    if(_sa.length() < 2) {
+        if(_i+1 < _a.size()) {
+            val = _a[_i+1];
+        }else {
+            val = "";
+        }
+    }else {
+        if(equals != std::string::npos) {
+            if(equals != _sa.size()-1) {
+                val = _sa.substr(equals+1);
+                _sa = _sa.substr(0, equals);
+                --_i;
+            }else {
+                throw args::missing_value(_sa.substr(0, equals));
+            }
+        }else {
+            if(options_abbr.find(_sa.substr(0, 1)) != options_abbr.end()) {
+                val = _sa.substr(1);
+                _sa = _sa[0];
+                --_i;
+            }else {
+                if(_i+1 < _a.size()) {
+                    val = _a[_i+1];
+                }else {
+                    val = "";
+                }
+            }
+        }
+    }
+
     auto found_option = options.find(_sa);
     bool found = false;
     if(found_option == options.end()) {
@@ -92,30 +124,26 @@ bool ArgParser::searchOption(const std::vector<std::string> &_a, const std::stri
     }
 
     if(found) {
-        if(_i+1 < _a.size()) {
-            if(_a[_i+1][0] != '-') {
-                ArgOption *valid_option = found_option->second;
-                if(!valid_option->allowed.empty()) {
-                    bool valid_value = false;
-                    for(auto o : valid_option->allowed) {
-                        if(o == _a[_i+1]) {
-                            valid_value = true;
-                            break;
-                        }
+        if(val.empty() || val[0] == '-') {
+            throw args::missing_value(_sa);
+        }else {
+            ArgOption *valid_option = found_option->second;
+            if(!valid_option->allowed.empty()) {
+                bool valid_value = false;
+                for(auto o : valid_option->allowed) {
+                    if(o == val) {
+                        valid_value = true;
+                        break;
                     }
-                    if(valid_value) {
-                        _r.option[found_option->first] = _a[_i+1];
-                    }else {
-                        throw args::invalid_value(_sa, _a[_i+1]);
-                    }
+                }
+                if(valid_value) {
+                    _r.option[found_option->first] = val;
                 }else {
-                    _r.option[found_option->first] = _a[_i+1];
+                    throw args::invalid_value(_sa, val);
                 }
             }else {
-                throw args::missing_value(_sa);
+                _r.option[found_option->first] = val;
             }
-        }else {
-            throw args::missing_value(_sa);
         }
 
         return true;
@@ -124,7 +152,7 @@ bool ArgParser::searchOption(const std::vector<std::string> &_a, const std::stri
     }
 }
 
-bool ArgParser::searchFlag(const std::string &_sa, ArgResults &_r) {
+bool ArgParser::validateFlag(const std::string &_sa, ArgResults &_r) {
     auto found_flag = flags.find(_sa);
     bool found = false;
     if(found_flag == flags.end()) {
@@ -357,18 +385,23 @@ ArgResults ArgParser::parse(const std::vector<std::string> &_args) {
             if(std::regex_match(_args[i], std::regex("^-[^-].*$"))) {
                 if(_args[i].length() > 2) {
                     // multiple flags
-                    for(std::size_t j = 1; j < _args[i].length(); ++j) {
-                        std::string f;
-                        f += _args[i][j];
-                        if(!searchFlag(f, results)) {
-                            throw args::invalid_argument(f);
+                    std::string stripped_arg = _args[i].substr(1);
+                    if(!validateOption(_args, stripped_arg, i, results)) {
+                        for(std::size_t j = 0; j < stripped_arg.length(); ++j) {
+                            std::string f;
+                            f += stripped_arg[j];
+                            if(!validateFlag(f, results)) {
+                                throw args::invalid_argument(f);
+                            }
                         }
+                        ++i;
+                    }else {
+                        i += 2;
                     }
-                    ++i;
                 }else {
                     std::string stripped_arg = _args[i].substr(1);
-                    if(!searchOption(_args, stripped_arg, i, results)) {
-                        if(!searchFlag(stripped_arg, results)) {
+                    if(!validateOption(_args, stripped_arg, i, results)) {
+                        if(!validateFlag(stripped_arg, results)) {
                             throw args::invalid_argument(stripped_arg);
                         }else {
                             ++i;
@@ -379,8 +412,8 @@ ArgResults ArgParser::parse(const std::vector<std::string> &_args) {
                 }
             }else if(std::regex_match(_args[i], std::regex("^--[^-].*$"))) {
                 std::string stripped_arg = _args[i].substr(2);
-                if(!searchOption(_args, stripped_arg, i, results)) {
-                    if(!searchFlag(stripped_arg, results)) {
+                if(!validateOption(_args, stripped_arg, i, results)) {
+                    if(!validateFlag(stripped_arg, results)) {
                         throw args::invalid_argument(stripped_arg);
                     }else {
                         ++i;
@@ -396,6 +429,9 @@ ArgResults ArgParser::parse(const std::vector<std::string> &_args) {
                     results.positional.push_back(_args[i]);
                     ++i;
                 }
+            }else {
+                results.positional.push_back(_args[i]);
+                ++i;
             }
         }else {
             ++i;

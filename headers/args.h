@@ -91,8 +91,8 @@ class ArgParser {
         std::string name;
         std::string description;
 
-        bool searchOption(const std::vector<std::string> &_a, const std::string &_sa, const std::size_t &_i, ArgResults &_r);
-        bool searchFlag(const std::string &_sa, ArgResults &_r);
+        bool validateOption(const std::vector<std::string> &_a, std::string _sa, std::size_t &_i, ArgResults &_r);
+        bool validateFlag(const std::string &_sa, ArgResults &_r);
         std::string findFlagAbbr(const std::string &_name);
         std::string findOptionAbbr(const std::string &_name);
         void splitDesc(std::string &_help, std::string &_desc);

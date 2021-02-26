@@ -2,10 +2,10 @@ Simple library for parsing command-line arguments.
 
 # Installation
 
-1. Clone the repository
+1. Clone the repository and go in it
 
 ```bash
-$ git clone https://github.com/Aoutnheub/args.git
+$ git clone https://github.com/Aoutnheub/args.git && cd args
 ```
 
 2. Create build directory and go in it

@@ -136,5 +136,6 @@ OPTIONS
 
 # To do
 
-- Make `--option=value` valid usage
+- ~~Make `--option=value` valid usage~~
+- ~~Make `-ovalue` valid usage~~
 - ~~Make description split into multiple lines if it's too long~~

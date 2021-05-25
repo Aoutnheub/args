@@ -98,8 +98,9 @@ bool ArgParser::validateOption(const std::vector<std::string> &_a, std::string _
             }
         }else {
             if(options_abbr.find(_sa.substr(0, 1)) != options_abbr.end()) {
-                val = _sa.substr(1);
-                _sa = _sa[0];
+                if(_i+1 < _a.size()) {
+                    val = _a[_i+1];
+                }
                 --_i;
             }else {
                 if(_i+1 < _a.size()) {

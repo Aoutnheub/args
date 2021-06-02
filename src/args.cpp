@@ -101,7 +101,7 @@ bool ArgParser::validateOption(const std::vector<std::string> &_a, std::string _
                 if(_i+1 < _a.size()) {
                     val = _a[_i+1];
                 }
-                --_i;
+                //--_i;
             }else {
                 if(_i+1 < _a.size()) {
                     val = _a[_i+1];
